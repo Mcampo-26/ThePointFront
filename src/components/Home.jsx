@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { usePaymentStore } from "../store/usePaymentStore"; // Asegúrate de que usePaymentStore esté correctamente importado
+import { usePaymentStore } from "../store/usePaymentStore";
 import { useProductStore } from "../store/useProductStore";
 import Swal from "sweetalert2";
 import io from "socket.io-client";
+import QRCode from "react-qr-code"; // Importamos react-qr-code
 
 // URL de tu servidor WebSocket en Heroku
 const socket = io("https://thepointback-03939a97aeeb.herokuapp.com", {
@@ -63,7 +64,6 @@ const Home = () => {
     };
   }, []);
 
-  // Función para manejar el resultado del pago
   const handlePaymentResult = async (status, paymentId) => {
     const storedProducts = JSON.parse(localStorage.getItem("selectedProducts")) || [];
     const selectedProducts = storedProducts.filter((product) => product.quantity > 0);
@@ -140,18 +140,17 @@ const Home = () => {
     setShowQR(false);
   };
 
-  // Cambia el nombre de la función para llamar a createDynamicQR
   const handlePayment = async () => {
     const productName = "La Previa";
-    const socketId = socket.id; // Obtener el ID del socket conectado
+    const socketId = socket.id;
     const selectedProducts = localProducts.filter((product) => product.quantity > 0);
     const totalAmount = selectedProducts.reduce(
       (total, product) => total + product.quantity * product.price,
       0
     );
-  
+
     try {
-      await createDynamicQR(productName, totalAmount, selectedProducts, socketId); // Usar createDynamicQR en lugar de createPaymentLink
+      await createDynamicQR(productName, totalAmount, selectedProducts, socketId);
       setShowQR(true);
     } catch (error) {
       console.error("Error al generar el QR dinámico:", error);
@@ -161,9 +160,7 @@ const Home = () => {
   const incrementQuantity = (id) => {
     setLocalProducts(
       localProducts.map((product) =>
-        product._id === id
-          ? { ...product, quantity: product.quantity + 1 }
-          : product
+        product._id === id ? { ...product, quantity: product.quantity + 1 } : product
       )
     );
   };
@@ -201,11 +198,6 @@ const Home = () => {
     (total, product) => total + product.quantity,
     0
   );
-
-  // Generar el enlace de la imagen QR utilizando Google Chart API y codificar la URL
-  const qrCodeImage = qrCodeURL
-    ? `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(qrCodeURL)}&choe=UTF-8`
-    : null;
 
   return (
     <div className="relative min-h-screen bg-gray-100 flex flex-col items-center py-8 bg-gray-300">
@@ -315,11 +307,7 @@ const Home = () => {
             </button>
 
             <div className="flex justify-center items-center">
-              {qrCodeImage ? (
-                <img src={qrCodeImage} alt="Código QR para pago" className="max-w-full h-auto" />
-              ) : (
-                <p>Cargando código QR...</p>
-              )}
+              <QRCode value={qrCodeURL} size={256} /> {/* Generamos el código QR */}
             </div>
           </div>
         </div>
