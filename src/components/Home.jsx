@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { usePaymentStore } from "../store/usePaymentStore";
-//import { useModoStore } from "../store/useModoStore"; // Asegúrate de importar tu store de MODO
+import { usePaymentStore } from "../store/usePaymentStore"; // Asegúrate de que usePaymentStore esté correctamente importado
 import { useProductStore } from "../store/useProductStore";
-import ReactQRCode from "react-qr-code";
 import Swal from "sweetalert2";
 import io from "socket.io-client";
 
@@ -16,14 +14,13 @@ const socket = io("https://thepointback-03939a97aeeb.herokuapp.com", {
 });
 
 const Home = () => {
-  const { createPaymentLink, paymentLink, paymentLoading, } = usePaymentStore();
+  // Cambia createPaymentLink a createDynamicQR
+  const { createDynamicQR, paymentLink, qrCodeURL, paymentLoading } = usePaymentStore();
   const { products, fetchProducts, needsUpdate, setNeedsUpdate } = useProductStore();
-  //const [modoQR, setModoQR] = useState(null); // Estado para almacenar el QR de MODO
   const [localProducts, setLocalProducts] = useState([]); // Para gestionar cantidades de productos seleccionados
   const [showQR, setShowQR] = useState(false); // Estado para mostrar/ocultar el QR
   const [paymentStatus, setPaymentStatus] = useState(null); // Estado del pago
   const [paymentId, setPaymentId] = useState(null); // ID del pago
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null); // Estado para seleccionar el método de pago
 
   useEffect(() => {
     fetchProducts();
@@ -142,24 +139,25 @@ const Home = () => {
 
   const handleCloseQR = () => {
     setShowQR(false);
-    //setSelectedPaymentMethod(null);
   };
 
- const handlePayment = async () => {
-  const productName = "La Previa";
-  const socketId = socket.id; // Obtener el ID del socket conectado
-
-  console.log('Datos que se enviarán:', { productName, totalAmount, selectedProducts, socketId });
-
-  try {
-    await createPaymentLink(productName, totalAmount, selectedProducts, socketId);
-    setShowQR(true);
-  } catch (error) {
-    console.error("Error al generar el QR dinámico:", error);
-  }
-};
-
+  // Cambia el nombre de la función para llamar a createDynamicQR
+  const handlePayment = async () => {
+    const productName = "La Previa";
+    const socketId = socket.id; // Obtener el ID del socket conectado
+    const selectedProducts = localProducts.filter((product) => product.quantity > 0);
+    const totalAmount = selectedProducts.reduce(
+      (total, product) => total + product.quantity * product.price,
+      0
+    );
   
+    try {
+      await createDynamicQR(productName, totalAmount, selectedProducts, socketId); // Usar createDynamicQR en lugar de createPaymentLink
+      setShowQR(true);
+    } catch (error) {
+      console.error("Error al generar el QR dinámico:", error);
+    }
+  };
 
   const incrementQuantity = (id) => {
     setLocalProducts(
@@ -188,6 +186,7 @@ const Home = () => {
       )
     );
   };
+
   const formatUnits = (quantity) => {
     return quantity === 1 ? "unidad" : "unidades";
   };
@@ -203,8 +202,6 @@ const Home = () => {
     (total, product) => total + product.quantity,
     0
   );
-
-
 
   return (
     <div className="relative min-h-screen bg-gray-100 flex flex-col items-center py-8 bg-gray-300">
@@ -300,19 +297,10 @@ const Home = () => {
               </button>
             </div>
           )}
-            {/* QR Code 
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 mt-4 rounded-lg shadow-lg"
-            onClick={simulatePaymentSuccess}
-            hidden
-          >
-            Simular Pago Exitoso
-          </button>
-         */}
         </div>
       </div>
 
-      {showQR && paymentLink && (
+      {showQR && qrCodeURL && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
           <div className="relative bg-white p-8 rounded-lg shadow-lg w-11/12 sm:w-4/5 max-w-lg h-auto">
             <button
@@ -322,36 +310,8 @@ const Home = () => {
               <FontAwesomeIcon icon={faTimes} size="xl" />
             </button>
 
-            {/* Botones para elegir el método de pago 
-            <div className="flex justify-center space-x-4 mb-6">
-              <button
-                className={`${
-                  selectedPaymentMethod === "mercadoPago" ? "bg-blue-500" : "bg-gray-300"
-                } text-white px-4 py-2 rounded-lg`}
-                onClick={() => setSelectedPaymentMethod("mercadoPago")}
-              >
-                Mercado Pago
-              </button>
-              {/* Uncomment this when MODO is available */}
-              {/* <button
-                className={`${
-                  selectedPaymentMethod === "modo" ? "bg-blue-500" : "bg-gray-300"
-                } text-white px-4 py-2 rounded-lg`}
-                onClick={() => handleModoPayment()}
-              >
-                MODO
-              </button> 
-            </div>*/}
-
-            {/* QR Code */}
             <div className="flex justify-center items-center">
-              {selectedPaymentMethod === "mercadoPago" && (
-                <ReactQRCode value={paymentLink} size={300} className="max-w-full h-auto" />
-              )}
-              {/* Uncomment this when MODO is available */}
-              {/* {selectedPaymentMethod === "modo" && modoQR && (
-                <ReactQRCode value={modoQR} size={300} className="max-w-full h-auto" />
-              )} */}
+              <img src={qrCodeURL} alt="Código QR para pago" className="max-w-full h-auto" />
             </div>
           </div>
         </div>
