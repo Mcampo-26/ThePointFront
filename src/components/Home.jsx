@@ -202,7 +202,7 @@ const Home = () => {
     0
   );
 
-  // Generar el enlace de la imagen QR utilizando Google Chart API
+  // Generar el enlace de la imagen QR utilizando Google Chart API y codificar la URL
   const qrCodeImage = qrCodeURL
     ? `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(qrCodeURL)}&choe=UTF-8`
     : null;
