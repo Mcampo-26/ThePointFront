@@ -14,8 +14,7 @@ const socket = io("https://thepointback-03939a97aeeb.herokuapp.com", {
 });
 
 const Home = () => {
-  // Cambia createPaymentLink a createDynamicQR
-  const { createDynamicQR, paymentLink, qrCodeURL, paymentLoading } = usePaymentStore();
+  const { createDynamicQR, qrCodeURL, paymentLoading } = usePaymentStore();
   const { products, fetchProducts, needsUpdate, setNeedsUpdate } = useProductStore();
   const [localProducts, setLocalProducts] = useState([]); // Para gestionar cantidades de productos seleccionados
   const [showQR, setShowQR] = useState(false); // Estado para mostrar/ocultar el QR
@@ -203,6 +202,11 @@ const Home = () => {
     0
   );
 
+  // Generar el enlace de la imagen QR utilizando Google Chart API
+  const qrCodeImage = qrCodeURL
+    ? `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(qrCodeURL)}&choe=UTF-8`
+    : null;
+
   return (
     <div className="relative min-h-screen bg-gray-100 flex flex-col items-center py-8 bg-gray-300">
       <div className="flex justify-end">
@@ -311,7 +315,11 @@ const Home = () => {
             </button>
 
             <div className="flex justify-center items-center">
-              <img src={qrCodeURL} alt="Código QR para pago" className="max-w-full h-auto" />
+              {qrCodeImage ? (
+                <img src={qrCodeImage} alt="Código QR para pago" className="max-w-full h-auto" />
+              ) : (
+                <p>Cargando código QR...</p>
+              )}
             </div>
           </div>
         </div>
